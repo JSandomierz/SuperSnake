@@ -2,13 +2,15 @@
 #include <SFML/Graphics.hpp>
 #include "CFrameCounter.hpp"
 #include "Snake.hpp"
+#include "CText.hpp"
 using namespace std;
 
 bool collideCircles();
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(800, 600),"testing",sf::Style::Default,sf::ContextSettings(0,0,4,2,0));
+    const int antialiasing=4;
+    sf::RenderWindow window(sf::VideoMode(800, 600),"testing",sf::Style::Default,sf::ContextSettings(0,0,antialiasing,2,0));
     window.setFramerateLimit(50);
 
     bool run=true;
@@ -17,7 +19,8 @@ int main()
     bool left=false,right=false;
     sf::Vector2f pos;
     CFrameCounter fps;
-
+    CText board;
+    board.setPosition(10,10);
     Snake s;
     while (window.isOpen() && run)
     {
@@ -84,6 +87,7 @@ int main()
                     angle=0;
                     sv.push_back(tmp);
                     */
+                    s.reset();
                 }
             }
             if(event.type==sf::Event::MouseButtonReleased)
@@ -104,9 +108,11 @@ int main()
         {
             s.addPiece();
         }
+        board.setString(board.floatToString(fps.frames_old));
         window.clear();
-        //cout <<sv.size()<<endl;
+        //cout <<s.snakeDeque.size()<<endl;
         for(int i=0;i<s.snakeDeque.size();i++) window.draw(s.snakeDeque.at(i));
+        window.draw(board);
         window.display();
         fps.count();
     }

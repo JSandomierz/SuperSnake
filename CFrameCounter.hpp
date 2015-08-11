@@ -11,6 +11,7 @@ class CFrameCounter
     sf::Clock fpscounter;
     sf::Time seconds;
     short frames;
+    short frames_old;
     CFrameCounter() : frames(0)
     {
     }
@@ -19,7 +20,7 @@ class CFrameCounter
         frames++;
         seconds=fpscounter.getElapsedTime();
         if(seconds.asSeconds()>=1){
-            std::cout << std::endl << frames;
+            frames_old=frames;
             frames=0;
             fpscounter.restart();
         }
