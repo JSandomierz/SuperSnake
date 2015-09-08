@@ -11,7 +11,13 @@ public:
         f.loadFromFile("OldNewspaperTypes.ttf");
         this->setFont(f);
     }
-    string floatToString(short x)
+    string floatToString(float x)
+    {
+        std::ostringstream s;
+        s<<x;
+        return s.str();
+    }
+    string intToString(int x)
     {
         std::ostringstream s;
         s<<x;

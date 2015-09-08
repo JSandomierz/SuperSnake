@@ -21,6 +21,7 @@ class CFrameCounter
         seconds=fpscounter.getElapsedTime();
         if(seconds.asSeconds()>=1){
             frames_old=frames;
+            //cout <<endl<<frames;
             frames=0;
             fpscounter.restart();
         }

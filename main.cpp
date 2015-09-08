@@ -1,8 +1,15 @@
 #include <math.h>
+#include <cstdlib>
+#include <ctime>
 #include <SFML/Graphics.hpp>
+#include <SFML/Network.hpp>
 #include "CFrameCounter.hpp"
 #include "Snake.hpp"
 #include "CText.hpp"
+#include "GUI.hpp"
+#include "Game.hpp"
+#include "Network.hpp"
+
 using namespace std;
 
 bool collideCircles();
@@ -10,109 +17,88 @@ bool collideCircles();
 int main()
 {
     const int antialiasing=4;
-    sf::RenderWindow window(sf::VideoMode(800, 600),"testing",sf::Style::Default,sf::ContextSettings(0,0,antialiasing,2,0));
-    window.setFramerateLimit(50);
+    sf::RenderWindow window(sf::VideoMode(800, 600),"Super Snake",sf::Style::Titlebar|sf::Style::Close,sf::ContextSettings(0,0,antialiasing,2,0));
+    window.setFramerateLimit(60);
+    window.setVerticalSyncEnabled(false);
 
     bool run=true;
-
-    bool add=false,go=true;
-    bool left=false,right=false;
-    sf::Vector2f pos;
+    bool menu=true;
+    bool isServer=false;
+    bool isClient=false;
     CFrameCounter fps;
-    CText board;
+    CText board,pointsBoard;
+    Game game(&run,&menu, &window);
+    Client client;
+
     board.setPosition(10,10);
-    Snake s;
+    pointsBoard.setPosition(10,570);
+
     while (window.isOpen() && run)
     {
         sf::Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed) window.close();
-            if(event.type == sf::Event::KeyPressed)
-            {
-                if(event.key.code==sf::Keyboard::Escape) run=false;
-            }
 
-            if(event.type == sf::Event::KeyPressed)
-            {
-                if(event.key.code==sf::Keyboard::A)
-                {
-                    left=true;
-                }
-                if(event.key.code==sf::Keyboard::D)
-                {
-                    right=true;
-                }
-                if(event.key.code==sf::Keyboard::Add)
-                {
-
-                }
-            }
-            if(event.type == sf::Event::KeyReleased)
-            {
-                if(event.key.code==sf::Keyboard::A)
-                {
-                    left=false;
-                }
-                if(event.key.code==sf::Keyboard::D)
-                {
-                    right=false;
-                }
-                //if(event.key.code==sf::Keyboard::A) cout << "a released\n";
-            }
-            if(event.type==sf::Event::MouseButtonPressed)
-            {
-                if(event.mouseButton.button == sf::Mouse::Left)
-                {
-                    add=true;//start
-                    /*{
-                        float x,y;
-                        sf::Mouse mouse;
-                        pos=(sf::Vector2f)mouse.getPosition(window);
-                        tmp.setPosition(pos);
-                        tmp.setFillColor(sf::Color::White);
-                        sv.push_back(tmp);
-                    }*/
-                }
-                if(event.mouseButton.button == sf::Mouse::Right)
-                {
-                    /*sv.clear();
-                    float x,y;
-                    sf::Mouse mouse;
-                    pos=(sf::Vector2f)mouse.getPosition(window);
-                    tmp.setPosition(pos);
-                    tmp.setFillColor(sf::Color::White);
-                    tmp.setRadius(10);
-                    radius=10;
-                    angle=0;
-                    sv.push_back(tmp);
-                    */
-                    s.reset();
-                }
-            }
-            if(event.type==sf::Event::MouseButtonReleased)
-            {
-                if(event.mouseButton.button == sf::Mouse::Left)
-                {
-
-                }
-                if(event.mouseButton.button == sf::Mouse::Right)
-                {
-                }
-            }
-        }
-        //sterowanie
-        if(left) s.angle+=5;
-        if(right) s.angle-=5;
-        if(add)
-        {
-            s.addPiece();
-        }
-        board.setString(board.floatToString(fps.frames_old));
+        board.setString(board.intToString(fps.frames_old));
+        game.fps=fps.frames_old;
+        pointsBoard.setString(pointsBoard.intToString(game.s[0]->score));
         window.clear();
-        //cout <<s.snakeDeque.size()<<endl;
-        for(int i=0;i<s.snakeDeque.size();i++) window.draw(s.snakeDeque.at(i));
-        window.draw(board);
+        if(menu)
+        {
+            while (window.pollEvent(event)) game.processMenuEvents(event, &isServer, &isClient);
+            for(int i=0;i<game.mainMenu.buttons.size();i++)
+            {
+                window.draw(game.mainMenu.buttons.at(i).body);
+                window.draw(game.mainMenu.buttons.at(i).text);
+            }
+            game.mainMenu.scaleButtons();
+        }
+        else
+        {
+            if(isServer)
+            {
+                Server server;
+                cout << "server created\n";
+                while(true)
+                {
+                    while (window.pollEvent(event))
+                    {
+                        if(event.type==sf::Event::Closed) window.close();
+                    }
+                    server.mainActivity(game);
+                    cout <<fps.frames<<endl;
+                }
+            }
+            else
+            {
+                while(window.pollEvent(event)) game.processEvents(event);
+                if(isClient)
+                {
+                    if(!client.connected)
+                    {
+                        if(client.connect(game,"127.0.0.1")) client.connected=true;
+                        else
+                        {
+                            isClient=false;
+                            menu=true;
+                        }
+                    }
+
+                    while(window.pollEvent(event)) game.processEvents(event);
+                    client.updateSnakes(game);
+                }
+                else
+                {
+                    game.processMovement();
+                }
+                window.draw(game.food);
+                for(short i=0;i<4;i++)
+                {
+                    //if(game.s[i]->active)
+                    for(int j=0;j<game.s[i]->snakeDeque.size();j++) window.draw(game.s[i]->snakeDeque.at(j));
+                }
+                window.draw(board);
+                window.draw(pointsBoard);
+            }
+        }
         window.display();
         fps.count();
     }
