@@ -17,13 +17,16 @@ public:
     FoodPiece food;
     short fps;
     int playerID;
-    Game(bool *run, bool *menu, sf::RenderWindow *window)
+    float snakeSpeed;
+    //sf::Vector2u arenaSize;
+    Game(bool *run, bool *menu, sf::RenderWindow *window, float &speedRating)
     {
         srand(time(NULL));
         this->window=window;
         this->menu=menu;
         isActive=run;
-        mainMenu.createMainMenu();
+        snakeSpeed=speedRating;
+        mainMenu.createMainMenu(window->getSize());
         food.setOrigin(15,15);
         food.setPointCount(300);
         food.setRadius(15);
@@ -38,10 +41,10 @@ public:
     {
         food.setPosition(rand()%(800-(int)food.getRadius())+1,rand()%600-(int)food.getRadius()+1);
         food.value=rand()%50+1;
-        s[0]=new Snake(sf::Vector2f(50,50),colors[0]);
-        s[1]=new Snake(sf::Vector2f(750,50),colors[1]);
-        s[2]=new Snake(sf::Vector2f(750,550),colors[2]);
-        s[3]=new Snake(sf::Vector2f(50,550),colors[3]);
+        s[0]=new Snake(sf::Vector2f(50,50),colors[0],snakeSpeed);
+        s[1]=new Snake(sf::Vector2f(750,50),colors[1],snakeSpeed);
+        s[2]=new Snake(sf::Vector2f(750,550),colors[2],snakeSpeed);
+        s[3]=new Snake(sf::Vector2f(50,550),colors[3],snakeSpeed);
         for(short i=0;i<4;i++)
         {
             s[i]->angle=90*i;
@@ -75,7 +78,12 @@ public:
             }
             if(event.key.code==sf::Keyboard::Add)
             {
-                s[0]->resizeSnake(true);
+                //s[0]->resizeSnake(true);
+            }
+            if(event.key.code==sf::Keyboard::BackSpace)
+            {
+                init();
+                s[0]->active=true;
             }
         }
         if(event.type == sf::Event::KeyReleased)
@@ -102,18 +110,17 @@ public:
         {
             if(event.mouseButton.button == sf::Mouse::Left)
             {
-                add=true;//start
                 {
                     float x,y;
                     sf::Mouse mouse;
                     pos=(sf::Vector2f)mouse.getPosition()-(sf::Vector2f)window->getPosition();
                 }
             }
-            if(event.mouseButton.button == sf::Mouse::Right)
+            /*if(event.mouseButton.button == sf::Mouse::Right)
             {
                 s[0]=new Snake(sf::Vector2f(100,100),colors[0]);
                 s[0]->active=true;
-            }
+            }*/
         }
         if(event.type==sf::Event::MouseButtonReleased)
         {
@@ -125,7 +132,7 @@ public:
             }
         }
     }
-    void processMenuEvents(sf::Event &event, bool *isServer, bool *isClient)
+    void processMenuEvents(sf::Event &event)
     {
         float x,y;
         sf::Mouse mouse;
@@ -138,9 +145,6 @@ public:
             if(event.key.code==sf::Keyboard::Escape) *isActive=false;
         }
 
-        if(event.type == sf::Event::KeyPressed)
-        {
-        }
         if(event.type == sf::Event::KeyReleased)
         {
             //if(event.key.code==sf::Keyboard::A) cout << "a released\n";
@@ -170,16 +174,9 @@ public:
                     *menu=false;
                     s[0]->active=true;
                     s[2]->active=true;
+
                 break;
                 case 2:
-                    *menu=false;
-                    *isServer=true;;
-                break;
-                case 3:
-                    *menu=false;
-                    *isClient=true;;
-                break;
-                case 4:
                     *isActive=false;
                 break;
                 }
@@ -190,7 +187,7 @@ public:
             }
         }
     }
-    void processMovement()
+    void processMovement(unsigned int &hiScore)
     {
         for(short i=0;i<4;i++)
         {
@@ -198,40 +195,31 @@ public:
             {
                 if(s[i]->left) s[i]->angle+=5;
                 if(s[i]->right) s[i]->angle-=5;
-                if(add)
-                {
-                    s[i]->addPiece(fps);
-                }
+                s[i]->addPiece(fps);
                 if(s[i]->checkFoodHit(food.getPosition(),food.getRadius()))
                 {
                     s[i]->limit+=food.value;
                     s[i]->score+=food.value;
-                    //if(s[i]->speed>1.5f) s[i]->speed-=0.1f;
-                    food.setPosition(rand()%(800-(int)food.getRadius())+1,rand()%600-(int)food.getRadius()+1);
+                    if(s[i]->speed<5.1f) s[i]->speed+=0.1f;
+                    food.setPosition(rand()%(800-(int)food.getRadius()*2)+(int)food.getRadius(),rand()%(600-(int)food.getRadius()*2)+(int)food.getRadius());
                     food.value=rand()%50+1;
+                    food.setFillColor(sf::Color(food.value*4+50,0,255));
                 }
-                //if(s[i]->selfCollide(s,i)) s[i]->die();
+                if(s[i]->selfCollide(s,i,window->getSize()))
+                {
+                    s[i]->die();
+                    if(i==0 && s[i]->score>hiScore)
+                    {
+                        hiScore=s[i]->score;
+                        FileOperator tmpOp;
+                        tmpOp.writeBestScore(hiScore);
+                    }
+
+                }
             }
         }
     }
-    //online part
-    //server function
-    void processOnlineMovement(bool l, bool r,int ID)
-    {
-        if(l) s[ID]->angle+=5;
-        if(r) s[ID]->angle-=5;
-        s[ID]->addPiece(60);
-    }
-    //client function
-    void updateOnlineMovement(sf::Vector2f heads[])
-    {
-        for(short i=0;i<4;i++)
-        {
-            s[i]->onlineAddPiece(heads[i]);
-        }
-    }
 private:
-bool add=true;
 //wskazniki na zmienne z mainu
 sf::RenderWindow *window;
 bool *isActive,*menu;

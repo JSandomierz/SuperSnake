@@ -59,14 +59,12 @@ public:
     {
         if(!f.loadFromFile("OldNewspaperTypes.ttf")) cout <<"broken";
     }
-    void createMainMenu()
+    void createMainMenu(sf::Vector2u windowSize)
     {
         buttons.clear();
-        buttons.push_back(*new Button("1 player",sf::Vector2f (400,100),sf::Vector2f(200,60),&f));
-        buttons.push_back(*new Button("2 players",sf::Vector2f (400,200),sf::Vector2f(200,60),&f));
-        buttons.push_back(*new Button("Server",sf::Vector2f (400,300),sf::Vector2f(200,60),&f));
-        buttons.push_back(*new Button("Client",sf::Vector2f (400,400),sf::Vector2f(200,60),&f));
-        buttons.push_back(*new Button("Exit",sf::Vector2f (400,500),sf::Vector2f(200,60),&f));
+        buttons.push_back(*new Button("1 player",sf::Vector2f (windowSize.x/2,windowSize.y/2-100),sf::Vector2f(200,60),&f));
+        buttons.push_back(*new Button("2 players",sf::Vector2f (windowSize.x/2,windowSize.y/2),sf::Vector2f(200,60),&f));
+        buttons.push_back(*new Button("Exit",sf::Vector2f (windowSize.x/2,windowSize.y/2+100),sf::Vector2f(200,60),&f));
     }
     int checkHits(sf::Vector2f pos)
     {

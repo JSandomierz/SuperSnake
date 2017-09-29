@@ -59,7 +59,7 @@ class Server
                                     bool left,right;
                                     packet>>left>>right;
                                     //cout << "\nReceived info from snake "<<counter;
-                                    game.processOnlineMovement(left,right,playerID);
+                                    //game.processOnlineMovement(left,right,playerID);
                                     //odpowiedz
                                     sf::Vector2f playerHead;
                                     out<<(int)0;
@@ -134,7 +134,7 @@ public:
             in>>heads[i].x>>heads[i].y;
             //cout << "Head "<<i<< " "<<heads[i].x<<", "<<heads[i].y<<endl;
         }
-        game.updateOnlineMovement(heads);
+        //game.updateOnlineMovement(heads);
         if(messageID==1) return false;
         else return true;
     }

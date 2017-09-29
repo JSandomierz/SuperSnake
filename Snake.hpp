@@ -9,14 +9,16 @@ public:
 bool active;
 std::deque<sf::CircleShape> snakeDeque;
 float angle=0;
-float speed=4.1f;
+float speed=1.0f;
 float radius=5;
 bool left,right;
 float radiusChange=1;
 unsigned int score=0;
 unsigned int limit=150;
-    Snake(sf::Vector2f position,sf::Color color):tmp(radius,1000)
+    Snake(sf::Vector2f position,sf::Color color,float &speedRating):tmp(radius,1000)
     {
+        speed=speedRating;
+        tmp.setOrigin(radius/2,radius/2);
         tmp.setPosition(position);
         tmp.setFillColor(color);
         snakeDeque.push_back(tmp);
@@ -39,32 +41,15 @@ unsigned int limit=150;
     }
     void addPiece(short fps)
     {
-        if(speed>0)
+        if(speed>0 && fps!=0)
         {
-            float finalSpeed=fps*speed/60;
+            float finalSpeed=60.f/fps*speed;
+            if(finalSpeed>6.1f) finalSpeed=6.1f;
             if(snakeDeque.size()>limit) snakeDeque.pop_front();
             float tmpangle=angle*2*3.14/360;
             tmp.move(sf::Vector2f(sin(tmpangle)*finalSpeed,cos(tmpangle)*finalSpeed));
             snakeDeque.push_back(tmp);
-        }
-    }
-    void onlineAddPiece(sf::Vector2f head)
-    {
-        if(speed>0)
-        {
-            //float finalSpeed=fps*speed/60;
-            //if(snakeDeque.size()>limit) snakeDeque.pop_front();
-            //float tmpangle=angle*2*3.14/360;
-            tmp.setPosition(head);
-            snakeDeque.push_back(tmp);
-        }
-    }
-    void test()
-    {
-        if(snakeDeque.size()==10)
-        {
-            snakeDeque.pop_front();
-            for(int i=0;i<9;i++) cout << "S frag "<<i<<" x:"<<snakeDeque.at(i).getPosition().x<<" y:"<<snakeDeque.at(i).getPosition().y<<endl;
+            //cout <<fps<<", speed: "<<finalSpeed<<", pos:"<<tmp.getPosition().x << ", "<<tmp.getPosition().y<<endl;
         }
     }
     void reset()
@@ -80,7 +65,7 @@ unsigned int limit=150;
         if(calculateDistance(pos,foodPos) < (rad+radius)) return true;
         else return false;
     }
-    bool selfCollide(Snake *s[],int thisSnake)
+    bool selfCollide(Snake *s[],int thisSnake, sf::Vector2u windowSize)
     {
         if(snakeDeque.size()<60) return false;
         sf::Vector2f pos=snakeDeque.at(snakeDeque.size()-1).getPosition();
@@ -118,11 +103,7 @@ unsigned int limit=150;
                 }
             }
         }
-        if(pos.x<0 || pos.x>800 || pos.y<0 || pos.y>600)
-        {
-            //cout << "pos: x:"<<pos.x<<" y:"<<pos.y<<endl;
-            return true;
-        }
+        if(pos.x<radius || pos.x>windowSize.x-radius || pos.y<radius || pos.y>windowSize.y-radius) return true;
         return false;
     }
     void die()
@@ -137,23 +118,3 @@ sf::CircleShape tmp;
     }
 };
 #endif //CFRAMECOUNTER_HPP_INCLUDED
-/*
-bool selfCollide()
-    {
-        if(snakeDeque.size()<60) return false;
-        sf::Vector2f pos=snakeDeque.at(snakeDeque.size()-1).getPosition();
-        for(int i=0;i<snakeDeque.size()-50;i++)
-        {
-            if(calculateDistance(pos,snakeDeque.at(i).getPosition())<=(radius*2))
-            {
-                return true;
-            }
-        }
-        if(pos.x<0 || pos.x>800 || pos.y<0 || pos.y>600)
-        {
-            //cout << "pos: x:"<<pos.x<<" y:"<<pos.y<<endl;
-            return true;
-        }
-        return false;
-    }
-*/
